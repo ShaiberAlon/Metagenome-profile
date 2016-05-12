@@ -1,0 +1,115 @@
+#!/bin/bash
+
+#   1    download Metagenome
+#   2    extract file
+#   3    delete compressed file
+#   4    run bowtie for p214
+#   5    run profile for p214
+#   6    run bowite for p207
+#   7    run profile for p207
+#   8    delete unzipped file
+#inputs:
+# -s | --sample : sample name 
+
+run_bowtie_and_profile () {
+#input:
+#$1 : sample name
+#$2 : sample file
+#$3 : contigs (reference) name
+#$4 : M value for anvi-profile (see anvi-profile --help for details)
+	sample=$1 #example : SRS011137
+	sample_file=$2 #example : Metagenome/HMP/SRS011137/SRS011137 (sample_file includes full path to file)
+	contigs=$3 # contigs includes the full path for the reference contigs FASTA file (but not the .fa extension)
+	M=$4
+	file1=$sample_file\_1.fastq # I used to do this: "$(find . -name \*$1*_1.fastq -print)"
+	file2=$sample_file\_2.fastq # I used to do this: "$(find . -name \*$1*_2.fastq -print)"
+	contigs_fa=$contigs\.fa #"$(find . -name \*$2*.fa -print)"
+	product_file_name=$contigs\_$sample #since $contigs includes the path, then the output will be into the same folder in which contigs.fa is
+	echo "Running bowtie2 with file1=$file1 file2=$file2 product=$product_file_name contigs=$contigs"
+	./bowtie2-map2-MULTITHREAD-batch-fixed.shx $file1 $file2 $product_file_name $contigs
+	if [ ! "$?" -eq 0 ]; then echo "problem occured in bowtie2"; exit 1; fi
+	bam_file=$product_file_name\.bam
+	contigs_db=$contigs\.db
+	echo "Running anvi-profile for $bam_file with M=$M for contigs_db=$contigs_db"
+	anvi-profile -i $bam_file -M $M -c $contigs_db
+	if [ ! "$?" -eq 0 ]; then echo "problem occured in anvi-profile"; exit 1; fi
+}
+
+#Main:
+Metagenome_source=Chinese_T2D #The defualt for the source is Chinese_T2D
+while [ "$1" != "" ]; do
+        case $1 in
+                -s | --sample )    shift
+                                                sample=$1
+                                                ;;
+		-M | --Metagenome_source ) shift
+						Metagenome_source=$1
+						;;
+                * )                             exit 1
+        esac
+    # Shift all the parameters down by one
+    shift
+done
+case $Metagenome_source in
+        Chinese_T2D )
+                        file_ext='sra'
+                        ;;
+        HMP )
+			file_ext='tar.bz2'
+                        ;;
+        *)      exit 1
+esac
+sample_file=$sample\.$file_ext
+output_folder=Metagenome\/$Metagenome_source
+downloaded_sample_file=$output_folder\/$sample_file 
+extracted_sample_folder=$output_folder\/$sample
+if [ ! -d $extracted_sample_folder ] #checking if a folder already exists (meaning if the sample was already extracted
+then
+	echo "the folder $extracted_sample_folder doesn't exists"
+	if [ ! -f "$downloaded_sample_file" ]
+	then #sample wasn't downloaded nor extracted
+		echo "$downloaded_sample_file doesn't exists, i.e. $sample wasn't downloaded nor extracted yet"
+		bash download_Metagenome_file.shx -s $sample -o $output_folder -M $Metagenome_source
+		if [ ! "$?" -eq 0 ]
+		then 
+			echo "problem occured in download_Metagenome_file.shx"
+			echo "deleting $downloaded_sample_file because download failed"
+			rm $downloaded_sample_file #deleting downloaded file because download failed
+			exit 1
+		fi
+	fi
+	bash extract_and_delete_compressed_Metagenome_file.shx -s $sample -o $output_folder -M $Metagenome_source
+	if [ ! "$?" -eq 0 ]
+	then 
+		echo "problem occured in extract_and_delete_compressed_Metagenome_file.shx"
+		echo "deleting $extracted_sample_folder because problem occured during extracting"
+		rm -r $extracted_sample_folder
+		exit 1
+	fi
+else #$sample was already downloaded and extracted:
+	if [ -f "$downloaded_sample_file" ]
+	then
+		echo "The folder $output_folder/$sample already exists, but $downloaded_sample_file also wasn't removed yet, i.e. there was a problem while extracting the files or they are being extracted right now. so treat_Metagenome_sample will quit now"
+		exit 1
+	else
+		echo "The folder $output_folder/$sample already exists, i.e. $sample was already downloaded and extracted"
+	fi
+fi
+if [ ! "$?" -eq 0 ]; then echo "problem occured in extract_Metagenome_file.shx"; exit 1; fi
+
+sample_file=$extracted_sample_folder\/$sample #after extraction the files (sample_1.fastq sample_2.fastq) are stored in path: $output_folder/$sample/
+contigs=p214_V8GG_col1/p214_V8GG_col1_contigs # used to do this: ${contigs_fa%.fa}
+M=1450
+#bowtie and profile for p214_V8GG_col1:
+run_bowtie_and_profile $sample $sample_file $contigs $M
+if [ ! "$?" -eq 0 ]; then echo "problem occured in treat_Metagenome_sample.shx: run_bowtie_and_profile"; exit 1; fi
+contigs=p207_V8M_col5/p207_V8M_col5-contigs
+M=2500
+#bowtie and profile for p207_V8M_col5:
+run_bowtie_and_profile $sample $sample_file $contigs $M
+if [ ! "$?" -eq 0 ]; then echo "problem occured in treat_Metagenome_sample.shx: run_bowtie_and_profile"; exit 1; fi
+#delete unzipped FASTA file for metagenome sample:
+#sample_folder=$output_folder\/$sample\/
+echo "deleting the folder $extracted_sample_folder with entire content"
+rm -r $extracted_sample_folder
+

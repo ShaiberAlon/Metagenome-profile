@@ -1,0 +1,51 @@
+#!/bin/bash
+
+#input files:
+# -s | --sample_file_name : file_name to extract
+
+output_folder=HMP
+while [ "$1" != "" ]; do
+        case $1 in
+                -s | --sample )    shift
+                                                sample=$1
+                                                ;;
+                -o | --output_folder )    shift
+                                                output_folder=$1
+                                                ;;
+                -M | --Metagenome_source ) shift
+                                                Metagenome_source=$1
+                                                ;;
+		* )                             exit 1
+        esac
+    shift
+done
+case $Metagenome_source in
+        Chinese_T2D )
+                        sample_file=$output_folder\/$sample\.sra
+			mkdir $output_folder\/$sample #creating directory with the name SRS###### so the fastq files would be deposited there
+			echo "Extracting $sample_file into $output_folder"
+			fastq-dump --split-3 $sample_file -O $output_folder/$sample
+			if [ ! "$?" -eq 0 ]; then echo "problem occured in extract_and_delete_compressed_Metagenome_file.sh"; exit 1; fi
+                        ;;
+        HMP )
+                        sample_file=$output_folder\/$sample\.tar.bz2
+			echo "Extracting $sample_file into $output_folder"
+			tar -xjf $sample_file -C $output_folder
+			if [ ! "$?" -eq 0 ]; then echo "problem occured in extract_and_delete_compressed_Metagenome_file.sh"; exit 1; fi
+			#changing the name of the files to SRS######_1.fastq
+			fastq_file=$output_folder\/$sample\/$sample
+			old_fastq_1=$fastq_file\.denovo_duplicates_marked.trimmed.1.fastq
+			old_fastq_2=$fastq_file\.denovo_duplicates_marked.trimmed.2.fastq
+			fastq_file_1=$fastq_file\_1.fastq
+			fastq_file_2=$fastq_file\_2.fastq
+			echo "Changing the fastq file to the form: $fastq_file_1, $fastq_file_2"
+			mv $old_fastq_1 $fastq_file_1
+			mv $old_fastq_2 $fastq_file_2
+			if [ ! "$?" -eq 0 ]; then echo "problem occured in extract_and_delete_compressed_Metagenome_file.sh"; exit 1; fi
+                        ;;
+        *)      exit 1
+esac
+
+echo "Deleting $sample_file"
+rm $sample_file #deleting the compressed version of the Metagenome files
+if [ ! "$?" -eq 0 ]; then echo "problem occured in deleting $sample_file extract_and_delete_compressed_Metagenome_file.sh"; exit 1; fi

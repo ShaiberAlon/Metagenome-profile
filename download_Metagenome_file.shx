@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Loop until all parameters are used up
+
+output_folder=Metagenome/HMP
+echo "beginning of file and output folder is $output_folder"
+while [ "$1" != "" ]; do
+        case $1 in
+                -s | --sample )    shift
+                                                sample=$1
+                                                ;;
+                -o | --output_folder )    shift
+                                                output_folder=$1
+                                                ;;
+		-M | --Metagenome_source ) shift 
+                                                Metagenome_source=$1
+                                                ;;
+                * )                             exit 1
+        esac
+    shift
+done
+echo "after taking input files and output folder is $output_folder"
+case $Metagenome_source in
+        Chinese_T2D ) 
+			first_6_charachters=`echo $sample | cut -c1-6`
+			sample_file=$sample\.sra
+			file_address=ftp://ftp-trace.ncbi.nih.gov/sra/sra-instant/reads/ByRun/sra/SRR/$first_6_charachters/$sample/$sample_file
+			;;
+        HMP )
+			sample_file=$sample\.tar.bz2
+			file_address=ftp://public-ftp.hmpdacc.org/Illumina/stool/$sample_file
+			;;
+        *)      exit 1
+esac
+
+echo "downloading $file_address into $output_folder"
+#wget $file_address -O $output_folder/$sample_file
+wget $file_address -O $output_folder/$sample_file
+if [ ! "$?" -eq 0 ]; then echo "problem occured in curl"; exit 1; fi

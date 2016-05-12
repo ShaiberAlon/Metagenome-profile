@@ -1,0 +1,56 @@
+#!/bin/bash
+#Metagenome_profile.sh
+#for each sample in the input list:
+#check if BAM file exists (of the form p207_V8M_col5_SRS$sample.bam)
+#if not:
+#	download from Metagenome
+#	extract file
+#	delete compressed file
+#	run bowtie
+#	run profile for p214
+#	run profile for p207
+#	delete unzipped file
+
+#inputs:
+# -l | --Metagenome_samples_list : a list of all the samples to download from HMP ftp server
+# -n | --number_of_cores  : number of cores of barhal to use (default: n=1)
+
+
+# Main
+n=1
+while [ "$1" != "" ]; do
+        case $1 in
+                -l | --Metagenome_samples_list )    	shift
+                                                list=$1
+                                                ;;
+                -n | --number_of_cores )       shift
+                                                n=$1
+                                                ;;
+                -M | --Metagenome_source ) shift
+                                                Metagenome_source=$1
+                                                ;;
+                * )                             exit 1
+        esac
+    # Shift all the parameters down by one
+    shift
+done
+
+for sample in `cat $list`
+do
+	log_file=log_files/$sample\.log
+	email='alon.shaiber@gmail.com'
+	bam_file=p214_V8GG_col1/p214_V8GG_col1_contigs_$sample\.bam
+	sam_file=p214_V8GG_col1/p214_V8GG_col1_contigs_$sample\.sam
+	if [ -a $bam_file ]
+	then
+		echo "$bam_file already exists so treat_Metagenome_sample.shx will not run"
+	else
+		if [ -a $sam_file ]
+		then
+			echo "$sam_file already exists so treat_Metagenome_sample.shx will not run"
+		else
+			echo "calling treat_Metagenome_sample.shx for $sample with n=$n log=$log_file"
+			clusterize -n $n -log $log_file -m $email bash treat_Metagenome_sample.shx -s $sample -M $Metagenome_source
+		fi
+	fi
+done
