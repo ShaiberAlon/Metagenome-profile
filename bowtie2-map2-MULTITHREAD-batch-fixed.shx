@@ -1,0 +1,15 @@
+#!/bin/bash
+# example run: ./bowtie2-map-batch.sh 13_Jan_CAT-QUALITY_PASSED_R1.fastq 13_Jan_CAT-QUALITY_PASSED_R2.fastq CAT0113 /Quaterly_megahit_12samples-assembly/Ella_quaterly_12samples_assembly_5kb
+
+# $1: 13_Jan_CAT-QUALITY_PASSED_R1.fastq
+# $2: 13_Jan_CAT-QUALITY_PASSED_R2.fastq
+# $3: CAT0113
+# $4: /Quaterly_megahit_12samples-assembly/Ella_quaterly_12samples_assembly_5kb
+
+set -e
+
+bowtie2 --threads 20 -x $4 -1 $1 -2 $2 -S $3.sam
+samtools view -F 4 -bS $3.sam > $3-RAW.bam
+samtools sort -o $3.bam $3-RAW.bam
+samtools index $3.bam
+rm $3.sam $3-RAW.bam
