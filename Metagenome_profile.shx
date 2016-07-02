@@ -41,6 +41,7 @@ do
 	email='alon.shaiber@gmail.com'
 	bam_file=p214_V8GG_col1/p214_V8GG_col1_contigs_$sample\.bam
 	sam_file=p214_V8GG_col1/p214_V8GG_col1_contigs_$sample\.sam
+	profile_folder=p214_V8GG_col1_contigs_$sample\.bam-ANVIO_PROFILE
 	if [ -a $bam_file ]
 	then
 		echo "$bam_file already exists so treat_Metagenome_sample.shx will not run"
