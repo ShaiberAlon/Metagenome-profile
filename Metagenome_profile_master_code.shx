@@ -5,3 +5,13 @@
 WAIT () {
 	python /workspace/meren/wait_for_cluster.py $1
 }
+
+DOWNLOAD () {
+	# download all the files from the list
+	rm -rf tr_files
+	mkdir tr_files
+	for file in `cat $list`
+	do
+		file1=``
+		clusterize -n 1 -log log_files/$file
+}
