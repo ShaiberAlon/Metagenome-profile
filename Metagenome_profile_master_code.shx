@@ -1,17 +1,92 @@
 #!/bin/bash
 
+
+WAIT () {
 # invoking wait for a clusterized job to complete
 # name of the job is specified in $1
-WAIT () {
 	python /workspace/meren/wait_for_cluster.py $1
 }
 
 DOWNLOAD () {
 	# download all the files from the list
-	rm -rf tr_files
-	mkdir tr_files
+	outputFolder=01tar_files
+	rm -rf $outputFolder
+	mkdir $outputFolder
 	for file in `cat $list`
+	# donwloading all files in the list with wget
 	do
-		file1=``
-		clusterize -n 1 -log log_files/$file
+		clusterize -n 1 -log log_files/$file\_download.log wget $file -O $outputFolder
+	done
+	# waiting for all donwloads to end.
+	WAIT wget
 }
+
+EXTRACT () {
+	outputFolder=02Fasta_files
+	rm -rf $outputFolder
+	mkdir $outputFolder
+	for file in `ls 01tr_files`
+	do
+		clusterize -n 1 -log log_files/$file\_tar.log tar -xjf $file -C $output_folder
+	done
+	# waiting for all files to be extracted
+	WAIT tar 
+}
+
+METAHIT_BOWTIE () {
+# Merges the samples for each patient into one FASTA file
+# The Metahit data base contains multiple samples per patient. For most patients it is 2 samples from 2 dates.
+# some patient have even more samples (see patients MH0009 and MH0012
+# input argument:
+# full path to contigs file (as expected by bowtie2)
+	contigs=$1
+	rm -f samples.txt
+	# creating a list of the samples 
+	sed $'s/  /\t/' <  | cut -d \/ -f 1 | uniq > samples.txt
+	for sample in `cat samples.txt`
+	do
+		outputBowtie=$contigs\_$sample
+		clusterize -n 8 -log log_files/$sample\_bowtie.log bowtie2 --threads 20	-x $contigs -1 -2 -S $outputBowtie
+	done
+}
+
+BOWTIE () {
+# run the bowtie batch
+# $1: 13_Jan_CAT-QUALITY_PASSED_R1.fastq
+# $2: 13_Jan_CAT-QUALITY_PASSED_R2.fastq
+# $3: CAT0113
+# $4: /Quaterly_megahit_12samples-assembly/Ella_quaterly_12samples_assembly_5kb
+
+	set -e
+
+	bowtie2 --threads 20 -x $4 -1 $1 -2 $2 -S $3.sam
+	samtools view -F 4 -bS $3.sam > $3-RAW.bam
+	samtools sort -o $3.bam $3-RAW.bam
+	samtools index $3.bam
+	rm $3.sam $3-RAW.bam
+
+}
+
+CLEAN () {
+	rm -rf 01tr_files
+	rm -rf 02Fasta_files
+
+}
+
+LOG () {
+	msg="[`date`] $1"
+	echo $msg >> log_files/$job-log.txt
+	echo $msg | mail -s "Update on $job" $email
+}
+
+#### Main ####
+job=Metahit
+list=$1
+email='alon.shaiber@gmail.com'
+# DOWLOAD files
+DOWNLOAD
+LOG "finished DOWNLOAD"
+
+#extract files
+EXTRACT
+LOG "Finished EXTRACT"
