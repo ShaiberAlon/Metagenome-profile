@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# This is how the samples.txt must look like:
+# sample        r1      r2
+# S-01  /path/to/S1_R1.fastq.gz /path/to/S1_R2.fastq.gz
+# S-02  /path/to/S2_R1.fastq.gz /path/to/S2_R2.fastq.gz
+# (...) (...)   (...)
+#
+# where r1 and r2 could have multiple files separated by a comma (if for example onre patient had multiple sequencing that are to be regarded as one sample.
+
 
 WAIT () {
 # invoking wait for a clusterized job to complete
@@ -12,11 +20,13 @@ DOWNLOAD () {
 	outputFolder=01tar_files
 	rm -rf $outputFolder
 	mkdir $outputFolder
-	for file in `cat $list`
-	# donwloading all files in the list with wget
+	while read sample R1 R2 
 	do
-		clusterize -n 1 -log log_files/$file\_download.log wget $file -O $outputFolder
-	done
+		if [ "$sample" == "sample" ]; then continue; fi
+		# Since each sample could have multiple files separated by a comma, the comma is converted to tab so that wget fetches all the files in the line
+		clusterize -n 1 -log log_files/$sample\_download.log wget `echo $R1 | tr ',' '\t'` -O $outputFolder
+		clusterize -n 1 -log log_files/$sample\_download.log wget `echo $R2 | tr ',' '\t'` -O $outputFolder
+	done < $list
 	# waiting for all donwloads to end.
 	WAIT wget
 }
