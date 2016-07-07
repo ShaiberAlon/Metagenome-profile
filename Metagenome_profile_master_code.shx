@@ -24,8 +24,8 @@ DOWNLOAD () {
 	do
 		if [ "$sample" == "sample" ]; then continue; fi
 		# Since each sample could have multiple files separated by a comma, the comma is converted to tab so that wget fetches all the files in the line
-		clusterize -n 1 -log log_files/$sample\_download.log wget `echo $R1 | tr ',' '\t'` -O $outputFolder
-		clusterize -n 1 -log log_files/$sample\_download.log wget `echo $R2 | tr ',' '\t'` -O $outputFolder
+		clusterize -n 1 -log log_files/$sample\_download.log wget `echo $R1 | tr ',' '\t'` -P $outputFolder
+		clusterize -n 1 -log log_files/$sample\_download.log wget `echo $R2 | tr ',' '\t'` -P $outputFolder
 	done < $list
 	# waiting for all donwloads to end.
 	WAIT wget
