@@ -35,7 +35,7 @@ EXTRACT () {
 	outputFolder=02Fasta_files
 	rm -rf $outputFolder
 	mkdir $outputFolder
-	for file in `ls 01tr_files`
+	for file in `ls 01tar_files`
 	do
 		clusterize -n 1 -log log_files/$file\_tar.log tar -xjf $file -C $output_folder
 	done
@@ -78,7 +78,7 @@ BOWTIE () {
 }
 
 CLEAN () {
-	rm -rf 01tr_files
+	rm -rf 01tar_files
 	rm -rf 02Fasta_files
 
 }
