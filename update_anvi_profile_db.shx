@@ -1,0 +1,41 @@
+#!/bin/bash
+
+usage="usage: $(basename "$0") [-h] [-p PROFILE.db] -- checking the version of the profile db and upgrading to most recent version
+where:
+    -h  show this help text
+    -p  profile.db file to upgrade"
+# default values for output file names:
+profile=$1
+while [ "$1" != "" ]; do
+        case $1 in
+                -p | --profile )    shift
+                                                profile=$1
+                                                ;;
+		-h | --h | --help ) shift
+						echo "$usage"
+						exit
+						;;
+                * )                             exit 1
+        esac
+    # Shift all the parameters down by one
+    shift
+done
+
+##### Main #####
+# reading the version of the file
+version=`sqlite3 $profile 'select value from self where key="version"'`
+
+case $version in
+	13 ) 	echo "version is 13 upgrading to 14 and then to 15"
+		anvi-script-upgrade-profile-db-v13-to-v14 --just-do-it $profile
+		anvi-script-upgrade-profile-db-v14-to-v15 --just-do-it $profile
+		;;
+	14 )	echo "version is 14. upgrading to 15"
+		anvi-script-upgrade-profile-db-v14-to-v15 --just-do-it $profile
+		;;
+	15 ) echo "version is 15, i.e. it's up-to-date"a
+		;;
+	* ) "something is wrong, the version of $profile is $version, and that doesn't make sense"
+		exit 1
+		;;
+esac
