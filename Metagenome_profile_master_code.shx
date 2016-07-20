@@ -9,6 +9,29 @@
 # where r1 and r2 could have multiple files separated by a comma (if for example onre patient had multiple sequencing that are to be regarded as one sample.
 
 
+C() {
+	    echo -e "\033[0;30m\033[46m$1\033[0m"
+    }
+
+INFO() {
+	echo
+	C "#"
+	C "#"
+	C "# $1"
+	C "#"
+	C "#"
+	echo
+}
+
+CHECK_FILE () {
+	if [ -s $1 ]
+	then
+		:
+	else
+		echo "Error: Expected to find $1, but it is not there!"
+		exit 1
+	fi
+}
 WAIT () {
 # invoking wait for a clusterized job to complete
 # name of the job is specified in $1
@@ -17,7 +40,7 @@ WAIT () {
 
 DOWNLOAD () {
 	# download all the files from the list
-	outputFolder=01tar_files
+	outputFolder=01samples_files
 	rm -rf $outputFolder
 	mkdir $outputFolder
 	while read sample R1 R2 
@@ -32,12 +55,18 @@ DOWNLOAD () {
 }
 
 EXTRACT () {
+	# creating a list with the local path to R1 and R2
+	local_list=local_$list
+	rm -f $local_list
+	echo -e "sample\tR1\t2" > $local_list
 	outputFolder=02Fasta_files
 	rm -rf $outputFolder
 	mkdir $outputFolder
 	for file in `ls 01tar_files`
 	do
 		clusterize -n 1 -log log_files/$file\_tar.log tar -xjf $file -C $output_folder
+		R1=$output_folder\$file
+		echo -e "$sample\t
 	done
 	# waiting for all files to be extracted
 	WAIT tar 
@@ -50,14 +79,14 @@ METAHIT_BOWTIE () {
 # input argument:
 # full path to contigs file (as expected by bowtie2)
 	contigs=$1
-	rm -f samples.txt
+#	rm -f samples.txt
 	# creating a list of the samples 
-	sed $'s/  /\t/' <  | cut -d \/ -f 1 | uniq > samples.txt
-	for sample in `cat samples.txt`
-	do
+#	sed $'s/  /\t/' <  | cut -d \/ -f 1 | uniq > samples.txt
+#	for sample in `cat samples.txt`
+#	do
 		outputBowtie=$contigs\_$sample
-		clusterize -n 8 -log log_files/$sample\_bowtie.log bowtie2 --threads 20	-x $contigs -1 -2 -S $outputBowtie
-	done
+#		clusterize -n 8 -log log_files/$sample\_bowtie.log bowtie2 --threads 20	-x $contigs -1 -2 -S $outputBowtie
+#	done
 }
 
 BOWTIE () {
@@ -66,15 +95,19 @@ BOWTIE () {
 # $2: 13_Jan_CAT-QUALITY_PASSED_R2.fastq
 # $3: CAT0113
 # $4: /Quaterly_megahit_12samples-assembly/Ella_quaterly_12samples_assembly_5kb
-
+	$contig = $1 #path to the reference contige file
+	product_file_name=$contigs\_$sample
 	set -e
-
-	bowtie2 --threads 20 -x $4 -1 $1 -2 $2 -S $3.sam
+	while read sample R1 R2
+	do
+		if [ "$sample" == "sample" ]; then continue; fi
+		bowtie2 --threads 20 -x $contig -1 $1 -2 $2 -S $3.sam
+	done < $list
 	samtools view -F 4 -bS $3.sam > $3-RAW.bam
 	samtools sort -o $3.bam $3-RAW.bam
 	samtools index $3.bam
 	rm $3.sam $3-RAW.bam
-
+	done < $list
 }
 
 CLEAN () {
