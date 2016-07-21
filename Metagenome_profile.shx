@@ -1,5 +1,7 @@
 #!/bin/bash
 #Metagenome_profile.sh
+usage="usage: $(basename "$0") [-h] [-n number of cores] [-l samples_list.txt] 
+
 #for each sample in the input list:
 #check if BAM file exists (of the form p207_V8M_col5_SRS$sample.bam)
 #if not:
@@ -13,7 +15,7 @@
 
 #inputs:
 # -l | --Metagenome_samples_list : a list of all the samples to download from HMP ftp server
-# -n | --number_of_cores  : number of cores of barhal to use (default: n=1)
+# -n | --number_of_cores  : number of cores of barhal to use (default: n=1)"
 
 
 # Main
