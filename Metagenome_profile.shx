@@ -34,7 +34,8 @@ while [ "$1" != "" ]; do
                                                 Metagenome_source=$1
                                                 ;;
 		-h | --help | --h )
-						echo $usage
+						echo "$usage"
+						exit
 						;;
                 * )                             exit 1
         esac
