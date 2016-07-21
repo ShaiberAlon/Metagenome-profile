@@ -14,6 +14,7 @@ if not:
 	delete unzipped file
 
 inputs:
+ -h | --help | --h : print this help message and exit
  -l | --Metagenome_samples_list : a list of all the samples to download from HMP ftp server
  -n | --number_of_cores  : number of cores of barhal to use (default: n=1)
  -M | --Metagenome_source : name of the source of data (HMP or Chinese_T2D) - this is a little old and should be changed in the future. As of now it determines the way the samples are downloaded. For more details look at download_Metagenome_file.shx and at extract_and_delete_compressed_Metagenome_file.shx"
