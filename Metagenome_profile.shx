@@ -2,20 +2,21 @@
 #Metagenome_profile.sh
 usage="usage: $(basename "$0") [-h] [-n number of cores] [-l samples_list.txt] 
 
-#for each sample in the input list:
-#check if BAM file exists (of the form p207_V8M_col5_SRS$sample.bam)
-#if not:
-#	download from Metagenome
-#	extract file
-#	delete compressed file
-#	run bowtie
-#	run profile for p214
-#	run profile for p207
-#	delete unzipped file
+for each sample in the input list:
+check if BAM file exists (of the form p207_V8M_col5_SRS$sample.bam)
+if not:
+	download from Metagenome
+	extract file
+	delete compressed file
+	run bowtie
+	run profile for p214
+	run profile for p207
+	delete unzipped file
 
-#inputs:
-# -l | --Metagenome_samples_list : a list of all the samples to download from HMP ftp server
-# -n | --number_of_cores  : number of cores of barhal to use (default: n=1)"
+inputs:
+ -l | --Metagenome_samples_list : a list of all the samples to download from HMP ftp server
+ -n | --number_of_cores  : number of cores of barhal to use (default: n=1)
+ -M | --Metagenome_source : name of the source of data (HMP or Chinese_T2D) - this is a little old and should be changed in the future. As of now it determines the way the samples are downloaded. For more details look at download_Metagenome_file.shx and at extract_and_delete_compressed_Metagenome_file.shx"
 
 
 # Main
@@ -31,6 +32,8 @@ while [ "$1" != "" ]; do
                 -M | --Metagenome_source ) shift
                                                 Metagenome_source=$1
                                                 ;;
+		-h | --help | --h )
+						echo $usage
                 * )                             exit 1
         esac
     # Shift all the parameters down by one
