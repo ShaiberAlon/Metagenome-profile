@@ -51,7 +51,7 @@ rm -f $temp_data_file
 touch $temp_data_file
 cat $data > $temp_data_file
 
-if [ fix=='1' ]
+if [ $fix=='1' ]
        	# calculating the number of columns in the data file	
 	column_num=`awk -F'\t' '{print NF; exit}' $data`
 	first_samples_column=6
