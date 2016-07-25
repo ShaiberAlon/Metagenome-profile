@@ -63,8 +63,8 @@ then
 fi
 
 # Creating the newick formatted trees
-anvi-matrix-to-newick $data -o $newick
-anvi-matrix-to-newick $data -o $samples_order --transpose
+anvi-matrix-to-newick $temp_data_file -o $newick
+anvi-matrix-to-newick $temp_data_file -o $samples_order --transpose
 
 # formatting the samples order file according to what anvi-server expects
 # example of properly formatted file:
